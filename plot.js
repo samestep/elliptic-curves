@@ -83,7 +83,7 @@ window.onload = () => {
         segments: segments,
         strokeColor: 'black'
       });
-      path.smooth();
+      path.smooth({ type: 'continuous' });
       return path;
     });
   }
