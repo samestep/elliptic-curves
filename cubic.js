@@ -1,3 +1,5 @@
+// https://stackoverflow.com/q/27176423/5044950
+
 function cuberoot(x) {
     var y = Math.pow(Math.abs(x), 1/3);
     return x < 0 ? -y : y;
