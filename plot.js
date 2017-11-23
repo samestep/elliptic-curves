@@ -150,15 +150,6 @@ window.onload = () => {
   main.activate();
   paper.setup('main');
 
-  function mainTransform() {
-    const { width, height } = paper.view.viewSize;
-    paper.view.matrix = new paper.Matrix();
-    paper.view.translate(paper.view.viewSize.divide(2));
-    paper.view.scale(Math.min(width / 6, height / 6));
-  }
-
-  mainTransform();
-
   function makePaths(f, roots, bounds) {
     const parts = graphWindow(f, roots, bounds.left, bounds.right, 100);
     return parts.map(({ closed, points }) => {
@@ -176,7 +167,10 @@ window.onload = () => {
   let paths = [];
 
   paper.view.onFrame = event => {
-    mainTransform();
+    const { width, height } = paper.view.viewSize;
+    paper.view.matrix = new paper.Matrix();
+    paper.view.translate(paper.view.viewSize.divide(2));
+    paper.view.scale(Math.min(width / 6, height / 6));
 
     let [a, b] = [now.y, now.x];
     paths.forEach(path => path.remove());
