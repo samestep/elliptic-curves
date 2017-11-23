@@ -69,8 +69,7 @@ window.onload = () => {
       size.width / bounds.width,
       size.height / bounds.height
     );
-    const samples = Math.ceil(size.width / 10);
-    const parts = graphWindow(f, roots, bounds.left, bounds.right, samples);
+    const parts = graphWindow(f, roots, bounds.left, bounds.right, 100);
     return parts.map(({ closed, points }) => {
       const segments = points.map(point => {
         return new paper.Point(point)
