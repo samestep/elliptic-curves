@@ -1,9 +1,13 @@
-/* https://stackoverflow.com/a/29103200/5044950 */
-
-html, body {
+body {
   margin: 0;
+  height: 100vh;
   overflow: hidden;
-  height: 100%;
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+}
+
+.left {
+  box-shadow: 0 0 1rem gray;
 }
 
 canvas[resize] {
