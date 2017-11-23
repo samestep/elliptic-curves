@@ -3,14 +3,21 @@ body {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 10rem 1fr;
+  grid-template-columns: min-content 1fr;
 }
 
 .left {
+  padding: 1rem;
   box-shadow: 0 0 1rem gray;
 }
 
 canvas[resize] {
   width: 100%;
   height: 100%;
+}
+
+#params {
+  width: 10rem;
+  height: 10rem;
+  box-shadow: inset 0 0 0.5rem gray;
 }

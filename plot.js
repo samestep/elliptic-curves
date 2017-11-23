@@ -62,7 +62,93 @@ window.onload = () => {
     return sections;
   }
 
-  paper.setup('canvas');
+  const params = new paper.PaperScope();
+  params.activate();
+  paper.setup('params');
+  const { width, height } = paper.view.viewSize;
+  paper.view.scale(width / 3, height / 3, [0, 0]);
+  paper.view.translate([1, 2]);
+
+  const detail = 100;
+
+  function makeDiscriminant(left, right) {
+    const path = new paper.Path();
+    for (let i = left*detail; i <= right*detail; i++) {
+      const b = i/detail;
+      const a = -Math.pow(27*Math.pow(b, 2)/4, 1/3);
+      path.add([b, a]);
+    }
+    return path;
+  }
+
+  const discrim = makeDiscriminant(-1, 0);
+  discrim.strokeWidth = 0.05;
+  discrim.strokeJoin = 'round';
+  const other = makeDiscriminant(0, 2);
+  [discrim, other].forEach(path => path.smooth({ type: 'continuous' }));
+  discrim.join(other);
+
+  const aAxis = new paper.Path({
+    strokeColor: 'black',
+    strokeWidth: 0.01,
+    segments: [[-1, 0], [2, 0]]
+  });
+  const bAxis = new paper.Path({
+    strokeColor: 'black',
+    strokeWidth: 0.01,
+    segments: [[0, -2], [0, 1]]
+  });
+
+  let colorDistance = 0;
+  let now = new paper.Point(1, -1);
+  let before = now;
+  let after = now;
+  let distance = 0;
+  let circles = [];
+
+  paper.view.onMouseDown = event => {
+    const delta = event.point.subtract(discrim.getNearestPoint(event.point));
+    if (delta.length <= discrim.strokeWidth) {
+      colorDistance = 1;
+    } else {
+      now = before.add(after.subtract(before).multiply(1 - distance));
+      before = now;
+      after = event.point;
+      distance = 1;
+      const circle = new paper.Path.Circle(after, 0);
+      circle.opacity = 1;
+      circles.push(circle);
+    }
+  };
+
+  paper.view.onFrame = event => {
+    colorDistance = Math.max(0, colorDistance - 2*event.delta);
+    const [pink, red] = ['pink', 'red'].map(name => new paper.Color(name));
+    discrim.strokeColor = pink.add(red.subtract(pink).multiply(colorDistance));
+
+    distance = Math.max(0, distance - 2*event.delta);
+    circles = circles.map(smaller => {
+      smaller.remove();
+      let { position, opacity } = smaller;
+      opacity = Math.max(0, opacity - 2*event.delta);
+      if (opacity > 0) {
+        const bigger = new paper.Path.Circle(position, 0.1*(1 - opacity));
+        bigger.fillColor = 'black';
+        bigger.opacity = opacity;
+        return bigger;
+      } else {
+        return null;
+      }
+    }).filter(circle => circle !== null);
+
+    now = before.add(after.subtract(before).multiply(1 - distance));
+    aAxis.position.y = now.y;
+    bAxis.position.x = now.x;
+  };
+
+  const main = new paper.PaperScope();
+  main.activate();
+  paper.setup('main');
 
   function makePaths(f, roots, bounds, size) {
     const scale = Math.min(
@@ -97,15 +183,7 @@ window.onload = () => {
     paths = makePaths(func, roots, new paper.Rectangle(-3, -3, 6, 6), size);
   }
 
-  let now = new paper.Point(0, 0);
-  let next = paper.Point.random().multiply(3).add([-2, -1]);
-
   paper.view.onFrame = event => {
-    const vector = next.subtract(now);
-    now = now.add(vector.multiply(event.delta));
-    draw(now.x, now.y, paper.view.viewSize);
-    if (vector.length < 0.1) {
-      next = paper.Point.random().multiply(3).add([-2, -1]);
-    }
+    draw(now.y, now.x, paper.view.viewSize);
   };
 };
