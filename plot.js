@@ -150,24 +150,23 @@ window.onload = () => {
   main.activate();
   paper.setup('main');
 
-  function makePaths(f, roots, bounds, size) {
-    const scale = Math.min(
-      size.width / bounds.width,
-      size.height / bounds.height
-    );
+  function mainTransform() {
+    const { width, height } = paper.view.viewSize;
+    paper.view.matrix = new paper.Matrix();
+    paper.view.translate(paper.view.viewSize.divide(2));
+    paper.view.scale(Math.min(width / 6, height / 6));
+  }
+
+  mainTransform();
+
+  function makePaths(f, roots, bounds) {
     const parts = graphWindow(f, roots, bounds.left, bounds.right, 100);
     return parts.map(({ closed, points }) => {
-      const segments = points.map(point => {
-        return new paper.Point(point)
-          .subtract(bounds.point)
-          .subtract(bounds.size.divide(2))
-          .multiply(scale)
-          .add(size.divide(2));
-      });
       const path = new paper.Path({
         closed: closed,
-        segments: segments,
-        strokeColor: 'black'
+        segments: points,
+        strokeColor: 'black',
+        strokeWidth: 0.01
       });
       path.smooth({ type: 'continuous' });
       return path;
@@ -176,14 +175,13 @@ window.onload = () => {
 
   let paths = [];
 
-  function draw(a, b, size) {
+  paper.view.onFrame = event => {
+    mainTransform();
+
+    let [a, b] = [now.y, now.x];
     paths.forEach(path => path.remove());
     const func = x => Math.sqrt(Math.pow(x, 3) + a*x + b);
     const roots = solveCubic(1, 0, a, b).sort();
-    paths = makePaths(func, roots, new paper.Rectangle(-3, -3, 6, 6), size);
-  }
-
-  paper.view.onFrame = event => {
-    draw(now.y, now.x, paper.view.viewSize);
+    paths = makePaths(func, roots, paper.view.bounds);
   };
 };
