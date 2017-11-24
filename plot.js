@@ -137,11 +137,11 @@ window.onload = () => {
   let distance = 0;
   let circles = [];
 
-  paper.view.onMouseDown = event => {
+  // we'll assign this to paper.view.onMouseDown later with some modifications
+  function handleParamClick(event) {
     const delta = event.point.subtract(discrim.getNearestPoint(event.point));
-    if (delta.length <= discrim.strokeWidth) {
-      colorDistance = 1;
-    } else {
+    const changeCurve = discrim.strokeWidth < delta.length;
+    if (changeCurve) {
       now = before.add(after.subtract(before).multiply(1 - distance));
       before = now;
       after = event.point;
@@ -149,8 +149,11 @@ window.onload = () => {
       const circle = new paper.Path.Circle(after, 0);
       circle.opacity = 1;
       circles.push(circle);
+    } else {
+      colorDistance = 1;
     }
-  };
+    return changeCurve;
+  }
 
   paper.view.onFrame = event => {
     colorDistance = Math.max(0, colorDistance - 2*event.delta);
@@ -199,13 +202,45 @@ window.onload = () => {
 
   let mouseIn = false;
   let mousePos = new paper.Point(0, 0);
-  let pointSize = 0;
-  let pointMarker = new paper.Path();
 
   const canvas = document.getElementById('main');
   canvas.addEventListener('mouseover', event => mouseIn = true);
   canvas.addEventListener('mouseout', event => mouseIn = false);
   paper.view.onMouseMove = event => mousePos = event.point;
+
+  let closest = [0, 0];
+  let primed = false;
+  let pointSize = 0;
+  let pointMarker = new paper.Path();
+
+  let dyingSel = [];
+  let sel = false;
+  let selPoint = [0, 0];
+  let selPointSize = 0;
+  let selPointMarker = null;
+
+  paper.view.onMouseDown = event => {
+    if (primed && distance === 0) {
+      if (selPointMarker !== null) {
+        dyingSel.push({ path: selPointMarker, radius: selPointSize });
+      }
+      sel = true;
+      selPoint = closest;
+      selPointSize = 0;
+      selPointMarker = new paper.Path({ fillColor: 'black' });
+    }
+  };
+
+  params.activate();
+  paper.view.onMouseDown = event => {
+    const changedCurve = handleParamClick(event);
+    if (sel && changedCurve) {
+      dyingSel.push({ path: selPointMarker, radius: selPointSize });
+      sel = false;
+      selPointMarker = null;
+    }
+  };
+  main.activate();
 
   paper.view.onFrame = event => {
     const { width, height } = paper.view.viewSize;
@@ -219,24 +254,44 @@ window.onload = () => {
     const roots = solveCubic(1, 0, a, b).sort();
     paths = makePaths(func, roots, paper.view.bounds);
 
-    const closest = closestPoint(a, b, mousePos.x, mousePos.y);
-    if (mouseIn && closest !== null && mousePos.subtract(closest).length <= 1) {
-      pointSize = Math.min(1, pointSize + 10*event.delta);
-    } else {
-      pointSize = Math.max(0, pointSize - 10*event.delta);
-    }
+    closest = closestPoint(a, b, mousePos.x, mousePos.y);
+    primed = mouseIn
+      && closest !== null
+      && mousePos.subtract(closest).length <= 1;
+    pointSize = primed
+      ? Math.min(1, pointSize + 10*event.delta)
+      : Math.max(0, pointSize - 10*event.delta);
     let pos = pointMarker.position;
     if (closest !== null) {
       const delta = pos.subtract(closest);
       const step = 20*Math.max(1, delta.length)*event.delta;
-      if (step < delta.length) {
-        pos = pos.subtract(delta.multiply(step / delta.length));
-      } else {
-        pos = closest;
-      }
+      pos = step < delta.length
+        ? pos.subtract(delta.multiply(step / delta.length))
+        : closest;
     }
     pointMarker.remove();
-    pointMarker = new paper.Path.Circle(pos, 0.05*pointSize);
+    pointMarker = new paper.Path.Circle(pos, 0.025*pointSize);
     pointMarker.fillColor = 'black';
+
+    dyingSel = dyingSel.map(({ path: bigger, radius }) => {
+      bigger.remove();
+      let { position } = bigger;
+      radius = Math.max(0, radius - 10*event.delta);
+      if (radius > 0) {
+        const smaller = new paper.Path.Circle(position, 0.05*radius);
+        smaller.fillColor = bigger.fillColor;
+        return { path: smaller, radius: radius };
+      } else {
+        return null;
+      }
+    }).filter(dying => dying !== null);
+
+    if (sel) {
+      selPointSize = Math.min(1, selPointSize + 10*event.delta);
+      selPointMarker.remove();
+      const color = selPointMarker.fillColor;
+      selPointMarker = new paper.Path.Circle(selPoint, 0.05*selPointSize);
+      selPointMarker.fillColor = color;
+    }
   };
 };
