@@ -214,30 +214,31 @@ window.onload = () => {
   let pointMarker = new paper.Path();
 
   let dyingSel = [];
-  let sel = false;
-  let selPoint = [0, 0];
-  let selPointSize = 0;
-  let selPointMarker = null;
+  let sel = [];
 
   paper.view.onMouseDown = event => {
-    if (primed && distance === 0) {
-      if (selPointMarker !== null) {
-        dyingSel.push({ path: selPointMarker, radius: selPointSize });
-      }
-      sel = true;
-      selPoint = closest;
-      selPointSize = 0;
-      selPointMarker = new paper.Path({ fillColor: 'black' });
+    if (primed && distance === 0 && sel.length < 3) {
+      sel.push({
+        point: closest,
+        radius: 0,
+        path: new paper.Path({ fillColor: 'black' })
+      });
     }
+  };
+
+  const tool = new paper.Tool();
+
+  tool.onKeyDown = event => {
+    dyingSel = dyingSel.concat(sel);
+    sel = [];
   };
 
   params.activate();
   paper.view.onMouseDown = event => {
     const changedCurve = handleParamClick(event);
-    if (sel && changedCurve) {
-      dyingSel.push({ path: selPointMarker, radius: selPointSize });
-      sel = false;
-      selPointMarker = null;
+    if (changedCurve) {
+      dyingSel = dyingSel.concat(sel);
+      sel = [];
     }
   };
   main.activate();
@@ -255,7 +256,8 @@ window.onload = () => {
     paths = makePaths(func, roots, paper.view.bounds);
 
     closest = closestPoint(a, b, mousePos.x, mousePos.y);
-    primed = mouseIn
+    primed = sel.length < 3
+      && mouseIn
       && closest !== null
       && mousePos.subtract(closest).length <= 1;
     pointSize = primed
@@ -286,12 +288,16 @@ window.onload = () => {
       }
     }).filter(dying => dying !== null);
 
-    if (sel) {
-      selPointSize = Math.min(1, selPointSize + 10*event.delta);
-      selPointMarker.remove();
-      const color = selPointMarker.fillColor;
-      selPointMarker = new paper.Path.Circle(selPoint, 0.05*selPointSize);
-      selPointMarker.fillColor = color;
-    }
+    sel = sel.map(({ point, radius, path: smaller }) => {
+      radius = Math.min(1, radius + 10*event.delta);
+      smaller.remove();
+      const bigger = new paper.Path.Circle(point, 0.05*radius);
+      bigger.fillColor = smaller.fillColor;
+      return {
+        point: point,
+        radius: radius,
+        path: bigger
+      };
+    });
   };
 };
