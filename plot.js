@@ -1,8 +1,8 @@
 window.onload = () => {
   function closestPoint(a, b, x, y) {
     // Differentiate the Weierstrass equation and solve for the derivative. Then
-    // set dot product of the tangent vector and the delta vector to be zero and
-    // solve for y, which should yield the expression in the map call below.
+    // set the dot product of the tangent vector and the delta vector to be zero
+    // and solve for y, which should yield the expression in the map call below.
     // Substituting back into the original Weierstrass equation should yield the
     // 7th-degree polynomial passed to the findRoots call.
 
