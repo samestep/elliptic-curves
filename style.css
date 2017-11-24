@@ -7,8 +7,42 @@ body {
 }
 
 .left {
-  padding: 1rem;
   box-shadow: 0 0 1rem gray;
+}
+
+.left > div {
+  margin: 1rem;
+  box-shadow: inset 0 0 0.5rem gray;
+}
+
+.zoom {
+  width: 10rem;
+  height: 10rem;
+  transition: background-color 0.5s;
+}
+
+.zoom:hover {
+  background-color: #eee;
+  transition: background-color 0.25s;
+}
+
+.zoom img {
+  margin: 1rem;
+  width: 8rem;
+  height: 8rem;
+  transition: filter 0.25s;
+}
+
+.zoom.active {
+  background-color: #ccf;
+}
+
+.zoom.active:hover {
+  background-color: #88f;
+}
+
+.zoom.active img {
+  filter: invert(100%);
 }
 
 canvas[resize] {
@@ -19,5 +53,4 @@ canvas[resize] {
 #params {
   width: 10rem;
   height: 10rem;
-  box-shadow: inset 0 0 0.5rem gray;
 }
