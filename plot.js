@@ -229,8 +229,10 @@ window.onload = () => {
   const tool = new paper.Tool();
 
   tool.onKeyDown = event => {
-    dyingSel = dyingSel.concat(sel);
-    sel = [];
+    if (event.key === 'escape') {
+      dyingSel = dyingSel.concat(sel);
+      sel = [];
+    }
   };
 
   params.activate();
