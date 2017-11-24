@@ -1,4 +1,35 @@
 window.onload = () => {
+  function closestPoint(a, b, x, y) {
+    // Differentiate the Weierstrass equation and solve for the derivative. Then
+    // set dot product of the tangent vector and the delta vector to be zero and
+    // solve for y, which should yield the expression in the map call below.
+    // Substituting back into the original Weierstrass equation should yield the
+    // 7th-degree polynomial passed to the findRoots call.
+
+    const points = findRoots([
+      -a*a*b + 4*a*b*x - 4*b*x*x + a*a*y*y,
+      -a*a*a - 4*a*b + 4*a*a*x + 8*b*x - 4*a*x*x,
+      -4*a*a - 4*b - 6*a*b + 8*a*x + 12*b*x + 6*a*y*y,
+      -4*a - 7*a*a - 12*b + 16*a*x - 4*x*x,
+      -16*a - 9*b + 8*x + 9*y*y,
+      -4 - 15*a + 12*x,
+      -12,
+      -9
+    ])[0]
+      .map(x0 => [x0, (3*x0*x0*y + a*y) / (2*x0 - 2*x + 3*x0*x0 + a)])
+      .filter(([x0, y0]) => Math.abs(y0*y0 - (x0*x0*x0 + a*x0 + b)) < 1e-6);
+    if (points.length > 0) {
+      return points.reduce((best, next) => {
+        const [l1, l2] = [best, next].map(([x0, y0]) => {
+          return Math.pow(x - x0, 2) + Math.pow(y - y0, 2);
+        });
+        return l2 < l1 ? next : best;
+      });
+    } else {
+      return null;
+    }
+  }
+
   function graphInterval(f, left, right, leftRoot, rightRoot, samples) {
     const xs = [...Array(samples).keys()].map(i => {
       return left + (i + 1)*(right - left)/(samples + 1);
@@ -166,16 +197,46 @@ window.onload = () => {
 
   let paths = [];
 
+  let mouseIn = false;
+  let mousePos = new paper.Point(0, 0);
+  let pointSize = 0;
+  let pointMarker = new paper.Path();
+
+  const canvas = document.getElementById('main');
+  canvas.addEventListener('mouseover', event => mouseIn = true);
+  canvas.addEventListener('mouseout', event => mouseIn = false);
+  paper.view.onMouseMove = event => mousePos = event.point;
+
   paper.view.onFrame = event => {
     const { width, height } = paper.view.viewSize;
     paper.view.matrix = new paper.Matrix();
     paper.view.translate(paper.view.viewSize.divide(2));
     paper.view.scale(Math.min(width / 6, height / 6));
 
-    let [a, b] = [now.y, now.x];
+    const [a, b] = [now.y, now.x];
     paths.forEach(path => path.remove());
     const func = x => Math.sqrt(Math.pow(x, 3) + a*x + b);
     const roots = solveCubic(1, 0, a, b).sort();
     paths = makePaths(func, roots, paper.view.bounds);
+
+    const closest = closestPoint(a, b, mousePos.x, mousePos.y);
+    if (mouseIn && closest !== null && mousePos.subtract(closest).length <= 1) {
+      pointSize = Math.min(1, pointSize + 10*event.delta);
+    } else {
+      pointSize = Math.max(0, pointSize - 10*event.delta);
+    }
+    let pos = pointMarker.position;
+    if (closest !== null) {
+      const delta = pos.subtract(closest);
+      const step = 20*Math.max(1, delta.length)*event.delta;
+      if (step < delta.length) {
+        pos = pos.subtract(delta.multiply(step / delta.length));
+      } else {
+        pos = closest;
+      }
+    }
+    pointMarker.remove();
+    pointMarker = new paper.Path.Circle(pos, 0.05*pointSize);
+    pointMarker.fillColor = 'black';
   };
 };
