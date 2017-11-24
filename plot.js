@@ -216,12 +216,85 @@ window.onload = () => {
   let dyingSel = [];
   let sel = [];
 
+  function clipLine(bounds, p, m) {
+    const { left, right, top, bottom } = bounds;
+    if (m === 0) {
+      return [[left, p.y], [right, p.y]];
+    } else {
+      const [x1, x2] = [top, bottom].map(y => p.x + (y - p.y)/m);
+      const [y1, y2] = [left, right].map(x => p.y + m*(x - p.x));
+      const points = [[x1, top], [x2, bottom], [left, y1], [right, y2]];
+      return [
+        points.reduce(([x, y], [z, w]) => z < x ? [z, w] : [x, y]),
+        points.reduce(([x, y], [z, w]) => z > x ? [z, w] : [x, y])
+      ];
+    }
+  }
+
   paper.view.onMouseDown = event => {
     if (primed && distance === 0 && sel.length < 3) {
+      const { bounds } = paper.view;
+      const solids = sel.map(({ point }, i) => {
+        let color;
+        if (sel.length < 2) {
+          color = 'blue';
+        } else if (i < 1) {
+          color = 'green';
+        } else {
+          color = 'red';
+        }
+        let m = null;
+        let endpoints;
+        if (point[0] !== closest[0]) {
+          m = (closest[1] - point[1]) / (closest[0] - point[0]);
+        } else if (point[1] !== closest[1]) {
+          endpoints = [[point[0], bounds.top], [point[0], bounds.bottom]];
+        } else if (point[1] !== 0) {
+          const a = now.y;
+          m = (3*point[0]*point[0] + a) / (2*point[1]);
+        } else {
+          endpoints = [[bounds.left, point[1]], [bounds.right, point[1]]];
+        }
+        let sum = null;
+        if (m !== null) {
+          const p1 = new paper.Point(point);
+          const p2 = new paper.Point(closest);
+          const x3 = m*m - p1.x - p2.x;
+          const y3 = m*(p1.x - x3) - p1.y;
+          sum = [x3, y3];
+          endpoints = clipLine(bounds, p1, m);
+        }
+        return {
+          color: color,
+          sum: sum,
+          line: new paper.Path({
+            strokeColor: color,
+            strokeWidth: 0,
+            segments: endpoints
+          })
+        };
+      });
+      const dashes = solids.map(({ color, sum }) => {
+        return new paper.Path({
+          strokeColor: color,
+          strokeWidth: 0,
+          segments: [[sum[0], bounds.top], [sum[0], bounds.bottom]],
+          dashArray: [0.1, 0.05]
+        });
+      })
+      let color;
+      if (sel.length < 1) {
+        color = 'red';
+      } else if (sel.length < 2) {
+        color = 'green';
+      } else {
+        color = 'blue';
+      }
       sel.push({
         point: closest,
         radius: 0,
-        path: new paper.Path({ fillColor: 'black' })
+        path: new paper.Path({ fillColor: color }),
+        lines: solids.map(({ line }) => line).concat(dashes)
       });
     }
   };
@@ -277,28 +350,52 @@ window.onload = () => {
     pointMarker = new paper.Path.Circle(pos, 0.025*pointSize);
     pointMarker.fillColor = 'black';
 
-    dyingSel = dyingSel.map(({ path: bigger, radius }) => {
+    dyingSel = dyingSel.map(({ path: bigger, radius, lines }) => {
       bigger.remove();
       let { position } = bigger;
       radius = Math.max(0, radius - 10*event.delta);
       if (radius > 0) {
         const smaller = new paper.Path.Circle(position, 0.05*radius);
         smaller.fillColor = bigger.fillColor;
-        return { path: smaller, radius: radius };
+        lines.forEach(line => {
+          line.strokeWidth = 0.01*radius;
+          const [p1, p2] = line.segments.map(seg => seg.point);
+          if (p1.x === p2.x) {
+            p1.y = paper.view.bounds.top;
+            p2.y = paper.view.bounds.bottom;
+          } else if (p1.y === p2.y) {
+            p1.x = paper.view.bounds.left;
+            p2.x = paper.view.bounds.right;
+          }
+        });
+        return { path: smaller, radius: radius, lines: lines };
       } else {
+        lines.forEach(line => line.remove());
         return null;
       }
     }).filter(dying => dying !== null);
 
-    sel = sel.map(({ point, radius, path: smaller }) => {
+    sel = sel.map(({ point, radius, path: smaller, lines }) => {
       radius = Math.min(1, radius + 10*event.delta);
       smaller.remove();
       const bigger = new paper.Path.Circle(point, 0.05*radius);
       bigger.fillColor = smaller.fillColor;
+      lines.forEach(line => {
+        line.strokeWidth = 0.01*radius;
+        const [p1, p2] = line.segments.map(seg => seg.point);
+        if (p1.x === p2.x) {
+          p1.y = paper.view.bounds.top;
+          p2.y = paper.view.bounds.bottom;
+        } else if (p1.y === p2.y) {
+          p1.x = paper.view.bounds.left;
+          p2.x = paper.view.bounds.right;
+        }
+      });
       return {
         point: point,
         radius: radius,
-        path: bigger
+        path: bigger,
+        lines: lines
       };
     });
   };
