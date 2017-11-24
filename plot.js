@@ -207,10 +207,13 @@ window.onload = () => {
   let mouseIn = false;
   let mousePos = new paper.Point(0, 0);
 
-  const canvas = document.getElementById('main');
-  canvas.addEventListener('mouseover', event => mouseIn = true);
-  canvas.addEventListener('mouseout', event => mouseIn = false);
-  paper.view.onMouseMove = event => mousePos = event.point;
+  document.getElementById('main').addEventListener('mouseout', event => {
+    mouseIn = false;
+  });
+  paper.view.onMouseMove = event => {
+    mouseIn = true;
+    mousePos = event.point;
+  };
 
   let closest = [0, 0];
   let primed = false;
