@@ -281,7 +281,7 @@ window.onload = () => {
           segments: [[sum[0], sum[1]], [sum[0], -sum[1]]],
           dashArray: [0.1, 0.05]
         });
-      })
+      });
       let color;
       if (sel.length < 1) {
         color = 'red';
