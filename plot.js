@@ -253,6 +253,17 @@ window.onload = () => {
   paper.view.onMouseDown = event => {
     if (primed && distance === 0 && sel.length < 3) {
       const [a, b] = [now.y, now.x];
+      const smallPoints = [];
+      const bigPoints = [new paper.Path.Circle(closest, 0)];
+      let color;
+      if (sel.length < 1) {
+        color = 'red';
+      } else if (sel.length < 2) {
+        color = 'green';
+      } else {
+        color = 'blue';
+      }
+      bigPoints[0].fillColor = color;
       const solids = sel.map(({ point }, i) => {
         let color;
         if (sel.length < 2) {
@@ -273,6 +284,9 @@ window.onload = () => {
           const sorted = [p1, p2, p4].sort(([x1, y1], [x2, y2]) => x1 - x2);
           endpoints = [sorted[0], sorted[2]];
         }
+        const sumPath = new paper.Path.Circle(p3, 0);
+        sumPath.fillColor = color;
+        smallPoints.push(sumPath);
         return {
           color: color,
           sum: p3,
@@ -298,15 +312,23 @@ window.onload = () => {
           [sel[0].point, closest, sel[1].point],
           [sel[1].point, closest, sel[0].point]
         ];
-        thirds = pointses.map(points => {
+        thirds = pointses.map((points, i) => {
           const sum1 = add(a, b, points[0], points[1]);
           const sum2 = add(a, b, sum1, points[2]);
           if (sum2 !== null) {
             const sorted = [sum1, points[2], [sum2[0], -sum2[1]]].sort(
               ([x1, y1], [x2, y2]) => x1 - x2
             );
+            let color;
+            if (i === 0) {
+              color = 'blue';
+            } else if (i === 1) {
+              color = 'green';
+            } else {
+              color = 'red';
+            }
             return new paper.Path({
-              strokeColor: new paper.Color(0.5, 0.5, 0.5, 1.0),
+              strokeColor: color,
               strokeWidth: 0,
               segments: [sorted[0], sorted[2]]
             });
@@ -315,25 +337,22 @@ window.onload = () => {
         });
         let sum = add(a, b, sel[0].point, sel[1].point);
         sum = add(a, b, sum, closest);
+        const point = new paper.Path.Circle(sum, 0);
+        const gray = new paper.Color(0.5, 0.5, 0.5, 1.0);
+        point.fillColor = gray;
+        bigPoints.push(point);
         thirds.push(new paper.Path({
-            strokeColor: new paper.Color(0.5, 0.5, 0.5, 1.0),
+            strokeColor: gray,
             strokeWidth: 0,
             segments: [sum, [sum[0], -sum[1]]],
             dashArray: [0.1, 0.05]
         }));
       }
-      let color;
-      if (sel.length < 1) {
-        color = 'red';
-      } else if (sel.length < 2) {
-        color = 'green';
-      } else {
-        color = 'blue';
-      }
       sel.push({
         point: closest,
         radius: 0,
-        path: new paper.Path({ fillColor: color }),
+        bigPoints: bigPoints,
+        smallPoints: smallPoints,
         lineRadius: 0,
         lines: solids.map(({ line }) => line).concat(dashes),
         assocRadius: 0,
@@ -394,23 +413,34 @@ window.onload = () => {
     pointMarker.fillColor = 'black';
 
     dyingSel = dyingSel.map(({
-        path: bigger, radius, lineRadius, lines, assocRadius, assoc
+        bigPoints, smallPoints, radius, lineRadius, lines, assocRadius, assoc
       }) => {
-      bigger.remove();
-      let { position } = bigger;
+      smallPoints = smallPoints.map(bigger => {
+        bigger.remove();
+        const smaller = new paper.Path.Circle(bigger.position, 0.0325*radius);
+        smaller.fillColor = bigger.fillColor;
+        return smaller;
+      });
+      bigPoints = bigPoints.map(bigger => {
+        bigger.remove();
+        const smaller = new paper.Path.Circle(bigger.position, 0.05*radius);
+        smaller.fillColor = bigger.fillColor;
+        return smaller;
+      });
       radius = Math.max(0, radius - 10*event.delta);
       lineRadius = Math.max(0, lineRadius - 10*event.delta);
       assocRadius = Math.max(0, assocRadius - 10*event.delta);
       if (radius > 0) {
-        const smaller = new paper.Path.Circle(position, 0.05*radius);
-        smaller.fillColor = bigger.fillColor;
         lines.forEach(line => line.strokeWidth = 0.01*lineRadius);
         assoc.forEach(line => line.strokeWidth = 0.01*assocRadius);
         return {
-          path: smaller, radius: radius, lineRadius: lineRadius, lines: lines,
+          smallPoints: smallPoints, bigPoints: bigPoints, radius: radius,
+          lineRadius: lineRadius, lines: lines,
           assocRadius: assocRadius, assoc: assoc
         };
       } else {
+        smallPoints.forEach(point => point.remove());
+        bigPoints.forEach(point => point.remove());
         lines.forEach(line => line.remove());
         assoc.forEach(line => line.remove());
         return null;
@@ -418,7 +448,8 @@ window.onload = () => {
     }).filter(dying => dying !== null);
 
     sel = sel.map(({
-        point, radius, path: smaller, lineRadius, lines, assocRadius, assoc
+        point, radius, bigPoints, smallPoints,
+        lineRadius, lines, assocRadius, assoc
       }) => {
       radius = Math.min(1, radius + 10*event.delta);
       if (showAssoc) {
@@ -428,15 +459,25 @@ window.onload = () => {
         lineRadius = Math.min(1, lineRadius + 10*event.delta);
         assocRadius = Math.max(0, assocRadius - 10*event.delta);
       }
-      smaller.remove();
-      const bigger = new paper.Path.Circle(point, 0.05*radius);
-      bigger.fillColor = smaller.fillColor;
+      smallPoints = smallPoints.map(smaller => {
+        smaller.remove();
+        const bigger = new paper.Path.Circle(smaller.position, 0.0325*radius);
+        bigger.fillColor = smaller.fillColor;
+        return bigger;
+      });
+      bigPoints = bigPoints.map(smaller => {
+        smaller.remove();
+        const bigger = new paper.Path.Circle(smaller.position, 0.05*radius);
+        bigger.fillColor = smaller.fillColor;
+        return bigger;
+      });
       lines.forEach(line => line.strokeWidth = 0.01*lineRadius);
       assoc.forEach(line => line.strokeWidth = 0.01*assocRadius);
       return {
         point: point,
         radius: radius,
-        path: bigger,
+        bigPoints: bigPoints,
+        smallPoints: smallPoints,
         lineRadius: lineRadius,
         lines: lines,
         assocRadius: assocRadius,
