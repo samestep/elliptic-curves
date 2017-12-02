@@ -203,8 +203,12 @@ window.onload = () => {
     bAxis.position.x = now.x;
   };
 
+  let showAssoc = false;
   Array.from(document.getElementsByClassName('zoom')).forEach(elem => {
-    elem.addEventListener('click', event => elem.classList.toggle('active'));
+    elem.addEventListener('click', event => {
+      elem.classList.toggle('active');
+      showAssoc = elem.classList.contains('active');
+    });
   });
 
   const main = new paper.PaperScope();
@@ -330,7 +334,10 @@ window.onload = () => {
         point: closest,
         radius: 0,
         path: new paper.Path({ fillColor: color }),
-        lines: solids.map(({ line }) => line).concat(dashes).concat(thirds)
+        lineRadius: 0,
+        lines: solids.map(({ line }) => line).concat(dashes),
+        assocRadius: 0,
+        assoc: thirds
       });
     }
   };
@@ -386,32 +393,54 @@ window.onload = () => {
     pointMarker = new paper.Path.Circle(pos, 0.025*pointSize);
     pointMarker.fillColor = 'black';
 
-    dyingSel = dyingSel.map(({ path: bigger, radius, lines }) => {
+    dyingSel = dyingSel.map(({
+        path: bigger, radius, lineRadius, lines, assocRadius, assoc
+      }) => {
       bigger.remove();
       let { position } = bigger;
       radius = Math.max(0, radius - 10*event.delta);
+      lineRadius = Math.max(0, lineRadius - 10*event.delta);
+      assocRadius = Math.max(0, assocRadius - 10*event.delta);
       if (radius > 0) {
         const smaller = new paper.Path.Circle(position, 0.05*radius);
         smaller.fillColor = bigger.fillColor;
-        lines.forEach(line => line.strokeWidth = 0.01*radius);
-        return { path: smaller, radius: radius, lines: lines };
+        lines.forEach(line => line.strokeWidth = 0.01*lineRadius);
+        assoc.forEach(line => line.strokeWidth = 0.01*assocRadius);
+        return {
+          path: smaller, radius: radius, lineRadius: lineRadius, lines: lines,
+          assocRadius: assocRadius, assoc: assoc
+        };
       } else {
         lines.forEach(line => line.remove());
+        assoc.forEach(line => line.remove());
         return null;
       }
     }).filter(dying => dying !== null);
 
-    sel = sel.map(({ point, radius, path: smaller, lines }) => {
+    sel = sel.map(({
+        point, radius, path: smaller, lineRadius, lines, assocRadius, assoc
+      }) => {
       radius = Math.min(1, radius + 10*event.delta);
+      if (showAssoc) {
+        lineRadius = Math.max(0, lineRadius - 10*event.delta);
+        assocRadius = Math.min(1, assocRadius + 10*event.delta);
+      } else {
+        lineRadius = Math.min(1, lineRadius + 10*event.delta);
+        assocRadius = Math.max(0, assocRadius - 10*event.delta);
+      }
       smaller.remove();
       const bigger = new paper.Path.Circle(point, 0.05*radius);
       bigger.fillColor = smaller.fillColor;
-      lines.forEach(line => line.strokeWidth = 0.01*radius);
+      lines.forEach(line => line.strokeWidth = 0.01*lineRadius);
+      assoc.forEach(line => line.strokeWidth = 0.01*assocRadius);
       return {
         point: point,
         radius: radius,
         path: bigger,
-        lines: lines
+        lineRadius: lineRadius,
+        lines: lines,
+        assocRadius: assocRadius,
+        assoc: assoc
       };
     });
   };
