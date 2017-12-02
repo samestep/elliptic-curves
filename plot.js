@@ -244,6 +244,7 @@ window.onload = () => {
 
   paper.view.onMouseDown = event => {
     if (primed && distance === 0 && sel.length < 3) {
+      const [a, b] = [now.y, now.x];
       const solids = sel.map(({ point }, i) => {
         let color;
         if (sel.length < 2) {
@@ -255,7 +256,7 @@ window.onload = () => {
         }
         const p1 = point;
         const p2 = closest;
-        const p3 = add(now.y, now.x, p1, p2);
+        const p3 = add(a, b, p1, p2);
         let endpoints;
         if (p3 === null) {
           endpoints = [p1, p2];
@@ -278,10 +279,41 @@ window.onload = () => {
         return new paper.Path({
           strokeColor: color,
           strokeWidth: 0,
-          segments: [[sum[0], sum[1]], [sum[0], -sum[1]]],
+          segments: [sum, [sum[0], -sum[1]]],
           dashArray: [0.1, 0.05]
         });
       });
+      let thirds = [];
+      if (sel.length > 1) {
+        const pointses = [
+          [sel[0].point, sel[1].point, closest],
+          [sel[0].point, closest, sel[1].point],
+          [sel[1].point, closest, sel[0].point]
+        ];
+        thirds = pointses.map(points => {
+          const sum1 = add(a, b, points[0], points[1]);
+          const sum2 = add(a, b, sum1, points[2]);
+          if (sum2 !== null) {
+            const sorted = [sum1, points[2], [sum2[0], -sum2[1]]].sort(
+              ([x1, y1], [x2, y2]) => x1 - x2
+            );
+            return new paper.Path({
+              strokeColor: new paper.Color(0.5, 0.5, 0.5, 1.0),
+              strokeWidth: 0,
+              segments: [sorted[0], sorted[2]]
+            });
+          }
+          return new paper.Path();
+        });
+        let sum = add(a, b, sel[0].point, sel[1].point);
+        sum = add(a, b, sum, closest);
+        thirds.push(new paper.Path({
+            strokeColor: new paper.Color(0.5, 0.5, 0.5, 1.0),
+            strokeWidth: 0,
+            segments: [sum, [sum[0], -sum[1]]],
+            dashArray: [0.1, 0.05]
+        }));
+      }
       let color;
       if (sel.length < 1) {
         color = 'red';
@@ -294,7 +326,7 @@ window.onload = () => {
         point: closest,
         radius: 0,
         path: new paper.Path({ fillColor: color }),
-        lines: solids.map(({ line }) => line).concat(dashes)
+        lines: solids.map(({ line }) => line).concat(dashes).concat(thirds)
       });
     }
   };
