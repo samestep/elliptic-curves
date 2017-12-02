@@ -203,6 +203,10 @@ window.onload = () => {
     bAxis.position.x = now.x;
   };
 
+  Array.from(document.getElementsByClassName('zoom')).forEach(elem => {
+    elem.addEventListener('click', event => elem.classList.toggle('active'));
+  });
+
   const main = new paper.PaperScope();
   main.activate();
   paper.setup('main');
