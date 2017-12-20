@@ -1,2 +1,10 @@
 /node_modules/
+/paper.pdf
 /roots-bundle.js
+
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
