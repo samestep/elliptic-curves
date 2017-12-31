@@ -16,5 +16,5 @@ npm install companion-roots
 browserify roots.js --standalone findRoots > roots-bundle.js
 ```
 
-[paper]: http://samestep.com/elliptic-curves/paper.pdf
-[web app]: http://samestep.com/elliptic-curves/
+[paper]: https://samestep.github.io/elliptic-curves/paper.pdf
+[web app]: https://samestep.github.io/elliptic-curves/
