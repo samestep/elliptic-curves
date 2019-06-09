@@ -12,6 +12,7 @@ addons:
       - texlive-full
 script:
   - latexmk -pdf
+  - yarn test
 deploy:
   provider: pages
   skip_cleanup: true
