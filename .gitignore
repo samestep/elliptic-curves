@@ -1,5 +1,4 @@
 /node_modules/
-/roots-bundle.js
 
 *.aux
 *.fdb_latexmk
