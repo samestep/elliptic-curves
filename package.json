@@ -1,0 +1,17 @@
+{
+  "name": "elliptic-curves",
+  "version": "1.0.0",
+  "description": "A synthesis/presentation of the basics of elliptic curves.",
+  "repository": "https://github.com/samestep/elliptic-curves.git",
+  "author": "Sam Estep <sam@samestep.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "browserify roots.js --standalone findRoots > roots-bundle.js"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.3"
+  },
+  "dependencies": {
+    "companion-roots": "^0.0.1"
+  }
+}

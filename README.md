@@ -4,16 +4,16 @@ Elliptic Curves
 [Paper]
 -------
 
-```sh
-pdflatex paper.tex
+```
+$ latexmk -pdf
 ```
 
 [Web app]
 ---------
 
-```sh
-npm install companion-roots
-browserify roots.js --standalone findRoots > roots-bundle.js
+```
+$ yarn
+$ yarn test
 ```
 
 [paper]: https://samestep.github.io/elliptic-curves/paper.pdf
