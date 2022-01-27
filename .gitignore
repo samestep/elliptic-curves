@@ -1,8 +1,8 @@
-/node_modules/
-
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
 *.out
 *.synctex.gz
+/node_modules/
+/roots-bundle.js
