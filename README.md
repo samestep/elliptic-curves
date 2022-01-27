@@ -1,21 +1,17 @@
-# Elliptic Curves [![Build Status][status]][travis]
+# Elliptic Curves [![Deploy](https://github.com/samestep/elliptic-curves/actions/workflows/deploy.yml/badge.svg)](https://github.com/samestep/elliptic-curves/actions/workflows/deploy.yml)
 
-[Paper]
--------
+## [Paper][]
 
-```
-$ latexmk -pdf
-```
-
-[Web app]
----------
-
-```
-$ yarn
-$ yarn build
+```sh
+latexmk -pdf
 ```
 
-[paper]: https://samestep.github.io/elliptic-curves/paper.pdf
-[status]: https://travis-ci.com/samestep/elliptic-curves.svg?branch=master
-[travis]: https://travis-ci.com/samestep/elliptic-curves
+## [Web app][]
+
+```sh
+yarn
+yarn build
+```
+
+[paper]:
 [web app]: https://samestep.github.io/elliptic-curves/
