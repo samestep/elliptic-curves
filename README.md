@@ -13,5 +13,5 @@ yarn
 yarn build
 ```
 
-[paper]:
+[paper]: https://samestep.github.io/elliptic-curves/paper.pdf
 [web app]: https://samestep.github.io/elliptic-curves/
