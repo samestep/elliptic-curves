@@ -8,11 +8,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: yarn
-      - run: yarn build
       - uses: xu-cheng/latex-action@v2
         with:
           root_file: paper.tex
+      - run: yarn
+      - run: yarn build
+      - run: rm .gitignore
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
