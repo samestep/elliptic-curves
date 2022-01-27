@@ -12,7 +12,7 @@ $ latexmk -pdf
 
 ```
 $ yarn
-$ yarn test
+$ yarn build
 ```
 
 [paper]: https://samestep.github.io/elliptic-curves/paper.pdf

@@ -6,7 +6,7 @@
   "author": "Sam Estep <sam@samestep.com>",
   "license": "MIT",
   "scripts": {
-    "test": "browserify roots.js --standalone findRoots > roots-bundle.js"
+    "build": "browserify roots.js --standalone findRoots > roots-bundle.js"
   },
   "devDependencies": {
     "browserify": "^16.2.3"
